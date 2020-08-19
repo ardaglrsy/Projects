@@ -12,7 +12,11 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.options import Options
 import serial
-
+import paho.mqtt.client as mqtt
+from keras.applications.vgg16 import VGG16
+from keras.applications.vgg16 import preprocess_input, decode_predictions
+from keras.preprocessing import image
+import numpy as np
 """opts = Options()
 opts.set_headless()
 assert opts.headless
@@ -22,7 +26,44 @@ browser = webdriver.Chrome(path)"""
 engine = pyttsx3.init("sapi5")
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[0].id)
-ser = serial.Serial('COM3',baudrate = 9600, timeout=1)
+#ser = serial.Serial('COM3',baudrate = 9600, timeout=1)
+broker_ip = "192.168.1.8"
+recon_list = []
+def recon():
+    model = VGG16(weights='imagenet')
+    img_path = 'Bill_Gates.jpg'
+    img = image.load_img(img_path, target_size=(224,224))
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+    x = preprocess_input(x)
+    preds = model.predict(x)
+    print('Predicted:', decode_predictions(preds, top=3)[0])
+    #recon_list.append(preds)
+    print(decode_predictions(preds, top=3)[0])
+def mqtt_command(comm):
+    
+    if "feed" in comm.lower():
+        client = mqtt.Client("P1")
+        client.connect(broker_ip) #connection to the mqtt broker
+        client.subscribe("esp/feed")#subscribed to the certain topic
+        client.publish("esp/feed", "ON")# sending command to the esp8266
+        print("Messeage sended to the topic")
+        speak("Message sended to the topic")
+    """
+    Other properitites will be added to the code later
+    """
+def take_command():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Waiting...")
+        audio = r.listen(source)
+
+    try:
+        print("Recognizing")
+        query = r.recognize_google(audio, language =  'en' )
+        print (f"user said : {query}\n")
+    except:
+        print("error")
 
 def speak(text):
     engine.say(text)
@@ -38,7 +79,7 @@ def youtube(vid):
     opts = Options()
     opts.set_headless()
     assert opts.headless
-    path = "C:/Users/game/Desktop/chromedriver.exe"
+    path = "C:/Users/Arda/Deyousktop/chromedriver.exe"
     browser = webdriver.Chrome(path)
     browser.get("https://www.youtube.com/")
     time.sleep(5)
@@ -53,36 +94,13 @@ def main():
 
     if "time" in command.lower():
         clock()
-        
-    
-
     elif "youtube" in command.lower():
-     #browser.get("https://www.youtube.com/")
-       print("Youtube is opened")
-       speak("Youtube is opened")
-       speak("Youtube video")
-     
-
-       youtube_command = input("Youtube video:")
-       youtube_command = youtube_command.replace("search", "")
-       youtube(youtube_command)
-    
- 
-try:
-  ser = serial.Serial( 'com10', 9600, timeout=1)
-
-
-  ser.isOpen() # try to open port, if possible print message and proceed with 'while True:'
-  print ("port is opened!")
-
-except IOError: # if port is already opened, close it and open it again and print message
-  ser.close()
-  ser.open()
-  print ("port was already open, was closed and opened again!")
-
-  
-
-speak("Initilazing AI ...")
-print("Initilazing AI")
-while (True):
-  main()
+        video = input("Waiting for youtube video")
+        youtube(video)
+    elif "recon" in command.lower():
+        recon()
+        
+        
+while(1):
+   main()
+   
