@@ -1,0 +1,32 @@
+from bs4 import BeautifulSoup
+import requests
+genres = ['action','adventure','animation','biography','comedy','crime','drama','family','fantasy','film_noir','history','horror','music','musical','mystery','romance','sci_fi','sport','thriller','war','western']
+urls = []
+
+for i in range(0,21):
+    index = genres[i]
+    url = f'https://www.imdb.com/search/title/?genres={index}&sort=user_rating,desc&title_type=feature&num_votes=25000,&pf_rd_m=A2FGELUUNOQJNL&pf_rd_p=5aab685f-35eb-40f3-95f7-c53f09d542c3&pf_rd_r=AYTYX9E7YRZHFMWWNFB0&pf_rd_s=right-6&pf_rd_t=15506&pf_rd_i=top&ref_=chttp_gnr_1'
+    urls.append(url)
+    
+
+
+
+r = requests.get(url)
+obj = BeautifulSoup(r.content,'html.parser')
+data = obj.find_all("div",{"class":"lister-item mode-advanced"})
+content = (data[0].contents)[len(data[0].contents)-2]
+folder = open("movie_list",'a')
+
+
+
+
+for movie in data:
+    movie_title = movie.find_all("h3",{"class":"lister-item-header"})
+    print(movie_title[0].text)
+    folder.write(movie_title[0].text)
+    
+
+
+folder.close()
+
+
