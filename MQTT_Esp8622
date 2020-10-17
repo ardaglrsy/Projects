@@ -1,9 +1,10 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <Servo.h>
  
 const char* ssid = "VodafoneNet-76HJ6L";
 const char* password =  "KAWLWVBHP6";
-const char* mqttServer = "192.168.1.8";
+const char* mqttServer = "***************";
 const int mqttPort = 1883;
 const char* mqttUser = "";
 const char* mqttPassword = "";
@@ -14,6 +15,7 @@ PubSubClient client(espClient);
 void setup() {
  
   Serial.begin(115200);
+   myservo.attach(9);
  
   WiFi.begin(ssid, password);
  
@@ -55,6 +57,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message:");
   for (int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
+    if ((char)payload[i] == 'A');
+    {
+      myservo.write(90);
+      
+    }
   }
  
   Serial.println();
